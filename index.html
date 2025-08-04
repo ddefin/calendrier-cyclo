@@ -1,132 +1,105 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <title>Calendrier & Parcours Cyclo</title>
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Calendrier Cyclo</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f4;
-      color: #333;
-    }
-    header {
-      background-color: #2c3e50;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-    section {
-      padding: 20px;
-      max-width: 900px;
-      margin: auto;
-    }
-    h2 {
-      color: #2c3e50;
-    }
-    .course {
-      background-color: white;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .course a {
-      color: #2980b9;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    #calendar-container {
-      background-color: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+    header, section { padding: 20px; }
+    header { background: #2c3e50; color: white; }
+    h1 { margin: 0; }
+    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    #map { height: 400px; }
+    .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
   </style>
 </head>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-gpx"></script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
 <body>
-<section id="map">
-  <h2>🗺️ Carte des parcours</h2>
-  <div id="mapid" style="height: 500px;"></div>
+
+<header>
+  <h1>🚴‍♂️ Calendrier Cyclo</h1>
+</header>
+
+<section class="container">
+  <div class="card">
+    <h2>📅 Prochain événement</h2>
+    <div id="next-event">Chargement...</div>
+  </div>
+
+  <div class="card">
+    <h2>🌬️ Météo</h2>
+    <div id="weather">Chargement...</div>
+  </div>
 </section>
 
+<section class="container">
+  <div class="card">
+    <h2>🗺️ Parcours Groupe 1</h2>
+    <div id="map"></div>
+  </div>
+
+  <div class="card">
+    <h2>🌞 Éphéméride</h2>
+    <div id="ephemeris">Chargement...</div>
+  </div>
+</section>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-gpx"></script>
 <script>
-  const map = L.map('mapid').setView([48.85, 2.77], 10); // Coordonnées centrées sur Île-de-France
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-  }).addTo(map);
-
-  // Ajoute les fichiers GPX
-  new L.GPX("https://https://ddefin.github.io/calendrier-cyclo/asterix_g2-19066527-1754252269-233.gpx", {
-    async: true,
-    marker_options: {
-      startIconUrl: 'https://leafletjs.com/examples/custom-icons/leaf-green.png',
-      endIconUrl: 'https://leafletjs.com/examples/custom-icons/leaf-red.png',
-      shadowUrl: 'https://leafletjs.com/examples/custom-icons/leaf-shadow.png'
-    }
-  }).on('loaded', function(e) {
+  // 📍 Affichage du parcours GPX
+  const map = L.map('map').setView([48.85, 2.77], 12); // Centré sur Noisiel
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  new L.GPX('groupe1.gpx', { async: true }).on('loaded', e => {
     map.fitBounds(e.target.getBounds());
   }).addTo(map);
 
-  new L.GPX("https://ddefin/gpx/parcours-g2.gpx", {
-    async: true
-  }).addTo(map);
-</script>
-
-  <header>
-    <h1>Calendrier des événements & Parcours Cyclo</h1>
-    <p>Consultez les dates et explorez les parcours G1 & G2</p>
-  </header>
-
-  <section id="calendar">
-    <h2>📅 Calendrier</h2>
-    <div id="calendar-container"></div>
-  </section>
-
-  <section id="courses">
-    <h2>🚴 Parcours Garmin</h2>
-
-    <div class="course">
-      <h3>Parcours G1</h3>
-      <p>Distance : 65 km · Dénivelé : 800 m</p>
-      <a href="https://connect.garmin.com/modern/course/387468682" target="_blank">Voir le parcours G1 sur Garmin</a>
-    </div>
-
-    <div class="course">
-      <h3>Parcours G2</h3>
-      <p>Distance : 85 km · Dénivelé : 1200 m</p>
-      <a href="https://connect.garmin.com/modern/course/387469078" target="_blank">Voir le parcours G2 sur Garmin</a>
-    </div>
-  </section>
-
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const calendarEl = document.getElementById('calendar-container');
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        events: {
-  url: url: 'https://ddefin.github.io/calendrier-cyclo/calendrier.ics'
-, // Remplace par l'URL de ton fichier ICS
-          format: 'ics'
-        },
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek'
-        }
-      });
-      calendar.render();
+  // 📅 Lecture du fichier ICS
+  fetch('calendrier.ics')
+    .then(res => res.text())
+    .then(text => {
+      const match = text.match(/DTSTART:(\d{8}T\d{6})/);
+      if (match) {
+        const dt = match[1];
+        const date = new Date(
+          dt.slice(0,4),
+          dt.slice(4,6)-1,
+          dt.slice(6,8),
+          dt.slice(9,11),
+          dt.slice(11,13)
+        );
+        document.getElementById('next-event').textContent = date.toLocaleString('fr-FR');
+      } else {
+        document.getElementById('next-event').textContent = "Aucun événement trouvé.";
+      }
     });
-  </script>
+
+  // 🌬️ Météo via OpenWeatherMap
+  const apiKey = '0f9f95c50d2d777d38a9314a4ffadc93';
+  fetch(`https://api.openweathermap.org/data/2.5/weather?lat=48.85&lon=2.77&units=metric&appid=${apiKey}`)
+    .then(res => res.json())
+    .then(data => {
+      const wind = data.wind;
+      const deg = wind.deg;
+      const dir = ['N','NE','E','SE','S','SW','W','NW'][Math.round(deg/45)%8];
+      document.getElementById('weather').innerHTML = `
+        Vent : ${wind.speed} km/h (${dir})<br>
+        Rafales : ${wind.gust || 'N/A'} km/h
+      `;
+    });
+
+  // 🌞 Éphéméride (lever/coucher du soleil)
+  fetch('https://api.sunrise-sunset.org/json?lat=48.85&lng=2.77&formatted=0')
+    .then(res => res.json())
+    .then(data => {
+      const sunrise = new Date(data.results.sunrise).toLocaleTimeString('fr-FR');
+      const sunset = new Date(data.results.sunset).toLocaleTimeString('fr-FR');
+      document.getElementById('ephemeris').innerHTML = `
+        Lever du soleil : ${sunrise}<br>
+        Coucher du soleil : ${sunset}
+      `;
+    });
+</script>
 
 </body>
 </html>
