@@ -53,30 +53,6 @@
     }
   </style>
 </head>
-   <section class="event-card">
-  <h2>🌦 Météo à Serris</h2>
-  <div id="weather">
-    <p><strong>📍 Ville :</strong> <span id="weather-city">Serris</span></p>
-    <p><strong>🌡 Température :</strong> <span id="weather-temp">–</span>°C</p>
-    <p><strong>☁️ Conditions :</strong> <span id="weather-desc">–</span></p>
-  </div>
-</section>
-
-<script>
-  const apiKey = '0f9f95c50d2d777d38a9314a4ffadc93'; // 🔁 Remplace avec ta vraie clé API
-  const city = 'Serris,FR';
-
-  fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=fr`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById('weather-temp').textContent = Math.round(data.main.temp);
-      document.getElementById('weather-desc').textContent = data.weather[0].description;
-    })
-    .catch(err => {
-      console.error("Erreur météo :", err);
-      document.getElementById('weather-desc').textContent = "Données indisponibles";
-    });
-</script>
 <body>
     <h2>📅 Prochain événement</h2>
     <div id="event-details">
@@ -85,7 +61,6 @@
       <p><strong>📍 Lieu :</strong> <span id="event-location">–</span></p>
       <p><strong>⏳ Dans :</strong> <span id="event-countdown">–</span></p>
     </div>
-
   </section>
   <section class="event-card">
   <script>
@@ -136,4 +111,28 @@
   </script>
 
 </body>
+  <section class="event-card">
+  <h2>🌦 Météo à Serris</h2>
+  <div id="weather">
+    <p><strong>📍 Ville :</strong> <span id="weather-city">Serris</span></p>
+    <p><strong>🌡 Température :</strong> <span id="weather-temp">–</span>°C</p>
+    <p><strong>☁️ Conditions :</strong> <span id="weather-desc">–</span></p>
+  </div>
+</section>
+
+<script>
+  const apiKey = 'YOUR_API_KEY_HERE'; // 🔁 Remplace avec ta vraie clé API
+  const city = 'Serris,FR';
+
+  fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=fr`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('weather-temp').textContent = Math.round(data.main.temp);
+      document.getElementById('weather-desc').textContent = data.weather[0].description;
+    })
+    .catch(err => {
+      console.error("Erreur météo :", err);
+      document.getElementById('weather-desc').textContent = "Données indisponibles";
+    });
+</script>
 </html>
