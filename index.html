@@ -54,6 +54,8 @@
   </style>
 </head>
 <body>
+
+  <section class="event-card">
     <h2>📅 Prochain événement</h2>
     <div id="event-details">
       <p><strong>📝 Nom :</strong> <span id="event-title">Chargement...</span></p>
@@ -62,24 +64,24 @@
       <p><strong>⏳ Dans :</strong> <span id="event-countdown">–</span></p>
     </div>
   </section>
-  <section class="event-card">
+
   <script>
-    fetch('calendrier.ics')
+    fetch('calendrier.ics') // ou URL directe si le fichier est en ligne
       .then(res => res.text())
       .then(text => {
         const events = text.split('BEGIN:VEVENT');
         let nextEvent = null;
 
         for (const evt of events) {
-          const dtMatch = evt.match(/DTSTART:(\d{8}T\d{6})/);
+          const dtMatch = evt.match(/DTSTART(?:;TZID=Europe\/Paris)?:([0-9T]+)/);
           if (dtMatch) {
             const dt = dtMatch[1];
             const date = new Date(
               dt.slice(0,4),
               dt.slice(4,6)-1,
               dt.slice(6,8),
-              dt.slice(9,11),
-              dt.slice(11,13)
+              dt.includes('T') ? dt.slice(9,11) : 0,
+              dt.includes('T') ? dt.slice(11,13) : 0
             );
             if (date > new Date()) {
               nextEvent = { raw: evt, date };
@@ -91,10 +93,13 @@
         if (nextEvent) {
           const titleMatch = nextEvent.raw.match(/SUMMARY:(.+)/);
           const locationMatch = nextEvent.raw.match(/LOCATION:(.+)/);
-          const title = titleMatch ? titleMatch[1] : "Événement";
-          const location = locationMatch ? locationMatch[1] : "Lieu non précisé";
+          const urlMatch = nextEvent.raw.match(/URL:(.+)/);
 
-          document.getElementById('event-title').textContent = title;
+          const title = titleMatch ? titleMatch[1].trim() : "Événement";
+          const location = locationMatch ? locationMatch[1].trim() : "Lieu non précisé";
+          const url = urlMatch ? urlMatch[1].trim() : "#";
+
+          document.getElementById('event-title').innerHTML = `<a href="${url}" target="_blank">${title}</a>`;
           document.getElementById('event-date').textContent = nextEvent.date.toLocaleString('fr-FR');
           document.getElementById('event-location').textContent = location;
 
@@ -111,28 +116,4 @@
   </script>
 
 </body>
-  <section class="event-card">
-  <h2>🌦 Météo à Serris</h2>
-  <div id="weather">
-    <p><strong>📍 Ville :</strong> <span id="weather-city">Serris</span></p>
-    <p><strong>🌡 Température :</strong> <span id="weather-temp">–</span>°C</p>
-    <p><strong>☁️ Conditions :</strong> <span id="weather-desc">–</span></p>
-  </div>
-</section>
-
-<script>
-  const apiKey = 'YOUR_API_KEY_HERE'; // 🔁 Remplace avec ta vraie clé API
-  const city = 'Serris,FR';
-
-  fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=fr`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById('weather-temp').textContent = Math.round(data.main.temp);
-      document.getElementById('weather-desc').textContent = data.weather[0].description;
-    })
-    .catch(err => {
-      console.error("Erreur météo :", err);
-      document.getElementById('weather-desc').textContent = "Données indisponibles";
-    });
-</script>
 </html>
