@@ -53,16 +53,30 @@
     }
   </style>
 </head>
-    <section class="event-card">
-    <h2>🌤 Météo à Serris</h2>
-    <div style="text-align:center;">
-      <iframe src="https://widget.meteo.msn.com/widget/forecast?location=fr-ile-de-france-serris&theme=light&metric=true&days=5&format=iframe" 
-              style="width:100%; max-width:500px; height:300px; border:none;" 
-              loading="lazy">
-      </iframe>
-    </div>
-  </section>
+   <section class="event-card">
+  <h2>🌦 Météo à Serris</h2>
+  <div id="weather">
+    <p><strong>📍 Ville :</strong> <span id="weather-city">Serris</span></p>
+    <p><strong>🌡 Température :</strong> <span id="weather-temp">–</span>°C</p>
+    <p><strong>☁️ Conditions :</strong> <span id="weather-desc">–</span></p>
+  </div>
+</section>
 
+<script>
+  const apiKey = '0f9f95c50d2d777d38a9314a4ffadc93'; // 🔁 Remplace avec ta vraie clé API
+  const city = 'Serris,FR';
+
+  fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=fr`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('weather-temp').textContent = Math.round(data.main.temp);
+      document.getElementById('weather-desc').textContent = data.weather[0].description;
+    })
+    .catch(err => {
+      console.error("Erreur météo :", err);
+      document.getElementById('weather-desc').textContent = "Données indisponibles";
+    });
+</script>
 <body>
     <h2>📅 Prochain événement</h2>
     <div id="event-details">
