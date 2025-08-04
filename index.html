@@ -1,40 +1,116 @@
-.event-card {
-  max-width: 500px;
-  margin: 2rem auto;
-  padding: 1.5rem;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #f0f4ff, #e0eaff);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  font-family: 'Segoe UI', sans-serif;
-  color: #333;
-  animation: fadeIn 1s ease-in-out;
-}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Prochain Événement</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #f9fbff;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 2rem;
+    }
 
-.event-card h2 {
-  text-align: center;
-  margin-bottom: 1rem;
-  font-size: 1.5rem;
-  color: #2a4d9b;
-}
+    .event-card {
+      max-width: 500px;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f0f4ff, #e0eaff);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      color: #333;
+      animation: fadeIn 1s ease-in-out;
+    }
 
-#event-details p {
-  margin: 0.5rem 0;
-  font-size: 1.1rem;
-}
+    .event-card h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      color: #2a4d9b;
+    }
 
-#event-countdown {
-  font-weight: bold;
-  color: #d35400;
-  animation: pulse 1.5s infinite;
-}
+    #event-details p {
+      margin: 0.5rem 0;
+      font-size: 1.1rem;
+    }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+    #event-countdown {
+      font-weight: bold;
+      color: #d35400;
+      animation: pulse 1.5s infinite;
+    }
 
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.6; }
-  100% { opacity: 1; }
-}
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <section class="event-card">
+    <h2>📅 Prochain événement</h2>
+    <div id="event-details">
+      <p><strong>📝 Nom :</strong> <span id="event-title">Chargement...</span></p>
+      <p><strong>🕒 Date :</strong> <span id="event-date">–</span></p>
+      <p><strong>📍 Lieu :</strong> <span id="event-location">–</span></p>
+      <p><strong>⏳ Dans :</strong> <span id="event-countdown">–</span></p>
+    </div>
+  </section>
+
+  <script>
+    fetch('calendrier.ics')
+      .then(res => res.text())
+      .then(text => {
+        const events = text.split('BEGIN:VEVENT');
+        let nextEvent = null;
+
+        for (const evt of events) {
+          const dtMatch = evt.match(/DTSTART:(\d{8}T\d{6})/);
+          if (dtMatch) {
+            const dt = dtMatch[1];
+            const date = new Date(
+              dt.slice(0,4),
+              dt.slice(4,6)-1,
+              dt.slice(6,8),
+              dt.slice(9,11),
+              dt.slice(11,13)
+            );
+            if (date > new Date()) {
+              nextEvent = { raw: evt, date };
+              break;
+            }
+          }
+        }
+
+        if (nextEvent) {
+          const titleMatch = nextEvent.raw.match(/SUMMARY:(.+)/);
+          const locationMatch = nextEvent.raw.match(/LOCATION:(.+)/);
+          const title = titleMatch ? titleMatch[1] : "Événement";
+          const location = locationMatch ? locationMatch[1] : "Lieu non précisé";
+
+          document.getElementById('event-title').textContent = title;
+          document.getElementById('event-date').textContent = nextEvent.date.toLocaleString('fr-FR');
+          document.getElementById('event-location').textContent = location;
+
+          const now = new Date();
+          const diff = nextEvent.date - now;
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+          const minutes = Math.floor((diff / (1000 * 60)) % 60);
+          document.getElementById('event-countdown').textContent = `${days} j, ${hours} h, ${minutes} min`;
+        } else {
+          document.getElementById('event-title').textContent = "Aucun événement à venir";
+        }
+      });
+  </script>
+
+</body>
+</html>
