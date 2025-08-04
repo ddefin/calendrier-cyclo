@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>Calendrier & Parcours Cyclo</title>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    header {
+      background-color: #2c3e50;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    section {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    .course {
+      background-color: white;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .course a {
+      color: #2980b9;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    #calendar-container {
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-gpx"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<body>
+<section id="map">
+  <h2>🗺️ Carte des parcours</h2>
+  <div id="mapid" style="height: 500px;"></div>
+</section>
+
+<script>
+  const map = L.map('mapid').setView([48.85, 2.77], 10); // Coordonnées centrées sur Île-de-France
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Ajoute les fichiers GPX
+  new L.GPX("https://https://ddefin.github.io/calendrier-cyclo/asterix_g2-19066527-1754252269-233.gpx", {
+    async: true,
+    marker_options: {
+      startIconUrl: 'https://leafletjs.com/examples/custom-icons/leaf-green.png',
+      endIconUrl: 'https://leafletjs.com/examples/custom-icons/leaf-red.png',
+      shadowUrl: 'https://leafletjs.com/examples/custom-icons/leaf-shadow.png'
+    }
+  }).on('loaded', function(e) {
+    map.fitBounds(e.target.getBounds());
+  }).addTo(map);
+
+  new L.GPX("https://ddefin/gpx/parcours-g2.gpx", {
+    async: true
+  }).addTo(map);
+</script>
+
+  <header>
+    <h1>Calendrier des événements & Parcours Cyclo</h1>
+    <p>Consultez les dates et explorez les parcours G1 & G2</p>
+  </header>
+
+  <section id="calendar">
+    <h2>📅 Calendrier</h2>
+    <div id="calendar-container"></div>
+  </section>
+
+  <section id="courses">
+    <h2>🚴 Parcours Garmin</h2>
+
+    <div class="course">
+      <h3>Parcours G1</h3>
+      <p>Distance : 65 km · Dénivelé : 800 m</p>
+      <a href="https://connect.garmin.com/modern/course/387468682" target="_blank">Voir le parcours G1 sur Garmin</a>
+    </div>
+
+    <div class="course">
+      <h3>Parcours G2</h3>
+      <p>Distance : 85 km · Dénivelé : 1200 m</p>
+      <a href="https://connect.garmin.com/modern/course/387469078" target="_blank">Voir le parcours G2 sur Garmin</a>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const calendarEl = document.getElementById('calendar-container');
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: {
+  url: url: 'https://ddefin.github.io/calendrier-cyclo/calendrier.ics'
+, // Remplace par l'URL de ton fichier ICS
+          format: 'ics'
+        },
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek'
+        }
+      });
+      calendar.render();
+    });
+  </script>
+
+</body>
+</html>
