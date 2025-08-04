@@ -1,105 +1,40 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Calendrier Cyclo</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
-    header, section { padding: 20px; }
-    header { background: #2c3e50; color: white; }
-    h1 { margin: 0; }
-    .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    #map { height: 400px; }
-    .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-  </style>
-</head>
-<body>
+.event-card {
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0f4ff, #e0eaff);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', sans-serif;
+  color: #333;
+  animation: fadeIn 1s ease-in-out;
+}
 
-<header>
-  <h1>🚴‍♂️ Calendrier Cyclo</h1>
-</header>
+.event-card h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: #2a4d9b;
+}
 
-<section class="container">
-  <div class="card">
-    <h2>📅 Prochain événement</h2>
-    <div id="next-event">Chargement...</div>
-  </div>
+#event-details p {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+}
 
-  <div class="card">
-    <h2>🌬️ Météo</h2>
-    <div id="weather">Chargement...</div>
-  </div>
-</section>
+#event-countdown {
+  font-weight: bold;
+  color: #d35400;
+  animation: pulse 1.5s infinite;
+}
 
-<section class="container">
-  <div class="card">
-    <h2>🗺️ Parcours Groupe 1</h2>
-    <div id="map"></div>
-  </div>
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-  <div class="card">
-    <h2>🌞 Éphéméride</h2>
-    <div id="ephemeris">Chargement...</div>
-  </div>
-</section>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-gpx"></script>
-<script>
-  // 📍 Affichage du parcours GPX
-  const map = L.map('map').setView([48.85, 2.77], 12); // Centré sur Noisiel
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-  new L.GPX('groupe1.gpx', { async: true }).on('loaded', e => {
-    map.fitBounds(e.target.getBounds());
-  }).addTo(map);
-
-  // 📅 Lecture du fichier ICS
-  fetch('calendrier.ics')
-    .then(res => res.text())
-    .then(text => {
-      const match = text.match(/DTSTART:(\d{8}T\d{6})/);
-      if (match) {
-        const dt = match[1];
-        const date = new Date(
-          dt.slice(0,4),
-          dt.slice(4,6)-1,
-          dt.slice(6,8),
-          dt.slice(9,11),
-          dt.slice(11,13)
-        );
-        document.getElementById('next-event').textContent = date.toLocaleString('fr-FR');
-      } else {
-        document.getElementById('next-event').textContent = "Aucun événement trouvé.";
-      }
-    });
-
-  // 🌬️ Météo via OpenWeatherMap
-  const apiKey = '0f9f95c50d2d777d38a9314a4ffadc93';
-  fetch(`https://api.openweathermap.org/data/2.5/weather?lat=48.85&lon=2.77&units=metric&appid=${apiKey}`)
-    .then(res => res.json())
-    .then(data => {
-      const wind = data.wind;
-      const deg = wind.deg;
-      const dir = ['N','NE','E','SE','S','SW','W','NW'][Math.round(deg/45)%8];
-      document.getElementById('weather').innerHTML = `
-        Vent : ${wind.speed} km/h (${dir})<br>
-        Rafales : ${wind.gust || 'N/A'} km/h
-      `;
-    });
-
-  // 🌞 Éphéméride (lever/coucher du soleil)
-  fetch('https://api.sunrise-sunset.org/json?lat=48.85&lng=2.77&formatted=0')
-    .then(res => res.json())
-    .then(data => {
-      const sunrise = new Date(data.results.sunrise).toLocaleTimeString('fr-FR');
-      const sunset = new Date(data.results.sunset).toLocaleTimeString('fr-FR');
-      document.getElementById('ephemeris').innerHTML = `
-        Lever du soleil : ${sunrise}<br>
-        Coucher du soleil : ${sunset}
-      `;
-    });
-</script>
-
-</body>
-</html>
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
