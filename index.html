@@ -54,6 +54,14 @@
   </style>
 </head>
 <body>
+    <h2>📅 Prochain événement</h2>
+    <div id="event-details">
+      <p><strong>📝 Nom :</strong> <span id="event-title">Chargement...</span></p>
+      <p><strong>🕒 Date :</strong> <span id="event-date">–</span></p>
+      <p><strong>📍 Lieu :</strong> <span id="event-location">–</span></p>
+      <p><strong>⏳ Dans :</strong> <span id="event-countdown">–</span></p>
+    </div>
+  </section>
   <section class="event-card">
       <section class="event-card">
     <h2>🌤 Météo à Serris</h2>
@@ -64,16 +72,6 @@
       </iframe>
     </div>
   </section>
-
-    <h2>📅 Prochain événement</h2>
-    <div id="event-details">
-      <p><strong>📝 Nom :</strong> <span id="event-title">Chargement...</span></p>
-      <p><strong>🕒 Date :</strong> <span id="event-date">–</span></p>
-      <p><strong>📍 Lieu :</strong> <span id="event-location">–</span></p>
-      <p><strong>⏳ Dans :</strong> <span id="event-countdown">–</span></p>
-    </div>
-  </section>
-
   <script>
     fetch('calendrier.ics')
       .then(res => res.text())
