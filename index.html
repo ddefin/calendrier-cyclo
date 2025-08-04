@@ -66,7 +66,7 @@
   </section>
 
   <script>
-    fetch('calendrier.ics') // ou URL directe si le fichier est en ligne
+    fetch('https://ddefin.github.io/calendrier-cyclo/calendrier.ics') // ou URL directe si le fichier est en ligne
       .then(res => res.text())
       .then(text => {
         const events = text.split('BEGIN:VEVENT');
