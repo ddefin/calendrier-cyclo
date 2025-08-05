@@ -128,10 +128,9 @@
           const gust = Math.round((closest.wind.gust || closest.wind.speed) * 3.6);
           const dir = degToCardinal(closest.wind.deg);
           const condition = closest.weather[0].description;
-          const iconCode = closest.weather[0].icon;
+          const iconCode = closest.weather[0].icon;const iconCode = closest.weather[0].icon;
 const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 document.getElementById('weather-icon').src = iconUrl;
-
 
           const decision = analyzeRideCondition(temp, wind, gust, condition);
 
