@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Prochain Événement</title>
+  <title>Prochain Événement Vélo + Météo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -30,134 +30,133 @@
       color: #2a4d9b;
     }
 
-    #event-details p {
+    .event-card p {
       margin: 0.5rem 0;
       font-size: 1.1rem;
     }
 
-    #event-countdown {
+    #weather-decision {
       font-weight: bold;
-      color: #d35400;
-      animation: pulse 1.5s infinite;
+      font-size: 1.2rem;
     }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.6; }
-      100% { opacity: 1; }
-</style>
+  </style>
 </head>
 <body>
+
   <section class="event-card">
-  <h2>🌦 Météo pour le prochain événement</h2>
-  <div id="event-weather">
-    <p><strong>🌤 Icône :</strong> <img id="weather-icon" src="" alt="Météo" style="vertical-align: middle; height: 60px;"></p>
-    <p><strong>📅 Événement :</strong> <span id="weather-event-title">Chargement...</span></p>
-    <p><strong>🕒 Date :</strong> <span id="weather-event-date">–</span></p>
-    <p><strong>🌡 Température :</strong> <span id="weather-temp">–</span>°C</p>
-    <p><strong>🌬 Vent :</strong> <span id="weather-wind">–</span></p>
-    <p><strong>☁️ Ciel :</strong> <span id="weather-condition">–</span></p>
-    <p><strong>🚴 Sortie :</strong> <span id="weather-decision">Analyse...</span></p>
-  </div>
-</section>
-<script>
-  const apiKey ='0f9f95c50d2d777d38a9314a4ffadc93'; // 🔁 Remplace par ta clé OpenWeather
-  const cityCoords = { lat: 48.8383, lon: 2.7908 }; // Serris
+    <h2>🌦 Météo pour le prochain événement</h2>
+    <div id="event-weather">
+      <p><strong>📅 Événement :</strong> <span id="weather-event-title">Chargement...</span></p>
+      <p><strong>🕒 Date :</strong> <span id="weather-event-date">–</span></p>
+      <p><strong>📍 Lieu :</strong> <span id="weather-event-location">–</span></p>
+      <p><strong>🌡 Température :</strong> <span id="weather-temp">–</span>°C</p>
+      <p><strong>🌬 Vent :</strong> <span id="weather-wind">–</span></p>
+      <p><strong>☁️ Ciel :</strong> <span id="weather-condition">–</span></p>
+      <p><strong>🌤 Icône :</strong> <img id="weather-icon" src="" alt="Icône météo" style="vertical-align: middle; height: 60px;"></p>
+      <p><strong>🚴 Sortie :</strong> <span id="weather-decision">Analyse...</span></p>
+    </div>
+  </section>
 
-  fetch('calendrier.ics')
-    .then(res => res.text())
-    .then(text => {
-      const events = text.split('BEGIN:VEVENT');
-      let nextEvent = null;
+  <script>
+    const apiKey = 'YOUR_API_KEY'; // 🔁 Remplace par ta clé OpenWeather
+    const cityCoords = { lat: 48.8383, lon: 2.7908 }; // Coordonnées de Serris
 
-      for (const evt of events) {
-        const dtMatch = evt.match(/DTSTART(?:;TZID=Europe\/Paris)?:([0-9T]+)/);
-        if (dtMatch) {
-          const dt = dtMatch[1];
-          const date = new Date(
-            dt.slice(0, 4),
-            dt.slice(4, 6) - 1,
-            dt.slice(6, 8),
-            dt.includes('T') ? dt.slice(9, 11) : 0,
-            dt.includes('T') ? dt.slice(11, 13) : 0
-          );
-          if (date > new Date()) {
-            nextEvent = { raw: evt, date };
-            break;
-          }
-        }
-      }
+    fetch('calendrier.ics')
+      .then(res => res.text())
+      .then(text => {
+        const events = text.split('BEGIN:VEVENT');
+        let nextEvent = null;
 
-      if (!nextEvent) {
-        document.getElementById('weather-event-title').textContent = "Aucun événement trouvé";
-        return;
-      }
-
-      // Extraire les données de l'événement
-      const title = nextEvent.raw.match(/SUMMARY:(.+)/)?.[1] || "Événement";
-      const location = nextEvent.raw.match(/LOCATION:(.+)/)?.[1] || "Lieu non précisé";
-      const eventDate = nextEvent.date;
-      document.getElementById('weather-event-title').textContent = title;
-      document.getElementById('weather-event-date').textContent = eventDate.toLocaleString('fr-FR');
-      document.getElementById('weather-event-location').textContent = location;
-
-      // Appeler OpenWeather forecast 5 jours / 3h
-      const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${cityCoords.lat}&lon=${cityCoords.lon}&units=metric&lang=fr&appid=${apiKey}`;
-      return fetch(apiUrl).then(res => res.json()).then(data => {
-        // Trouver la prévision la plus proche de l'heure de l'événement
-        let closest = null;
-        let minDiff = Infinity;
-
-        for (const item of data.list) {
-          const forecastDate = new Date(item.dt * 1000);
-          const diff = Math.abs(eventDate - forecastDate);
-          if (diff < minDiff) {
-            minDiff = diff;
-            closest = item;
+        for (const evt of events) {
+          const dtMatch = evt.match(/DTSTART(?:;TZID=Europe\/Paris)?:([0-9T]+)/);
+          if (dtMatch) {
+            const dt = dtMatch[1];
+            const date = new Date(
+              dt.slice(0, 4),
+              dt.slice(4, 6) - 1,
+              dt.slice(6, 8),
+              dt.includes('T') ? dt.slice(9, 11) : 0,
+              dt.includes('T') ? dt.slice(11, 13) : 0
+            );
+            if (date > new Date()) {
+              nextEvent = { raw: evt, date };
+              break;
+            }
           }
         }
 
-        if (closest) {
-          const temp = Math.round(closest.main.temp);
-          const wind = Math.round(closest.wind.speed * 3.6); // m/s → km/h
-          const gust = Math.round((closest.wind.gust || closest.wind.speed) * 3.6);
-          const dir = degToCardinal(closest.wind.deg);
-          const condition = closest.weather[0].description;
-          const iconCode = closest.weather[0].icon;const iconCode = closest.weather[0].icon;
-const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
-document.getElementById('weather-icon').src = iconUrl;
-         
-          const decision = analyzeRideCondition(temp, wind, gust, condition);
-          document.getElementById('weather-temp').textContent = temp;
-          document.getElementById('weather-wind').textContent = `${wind} km/h ${dir} (rafales ${gust} km/h)`;
-          document.getElementById('weather-condition').textContent = condition;
-          document.getElementById('weather-decision').textContent = decision.message;
-          document.getElementById('weather-decision').style.color = decision.color;
+        if (!nextEvent) {
+          document.getElementById('weather-event-title').textContent = "Aucun événement trouvé";
+          return;
         }
+
+        // Extraire les données
+        const title = nextEvent.raw.match(/SUMMARY:(.+)/)?.[1] || "Événement";
+        const location = nextEvent.raw.match(/LOCATION:(.+)/)?.[1] || "Lieu non précisé";
+        const eventDate = nextEvent.date;
+
+        document.getElementById('weather-event-title').textContent = title;
+        document.getElementById('weather-event-date').textContent = eventDate.toLocaleString('fr-FR');
+        document.getElementById('weather-event-location').textContent = location;
+
+        const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${cityCoords.lat}&lon=${cityCoords.lon}&units=metric&lang=fr&appid=${apiKey}`;
+        return fetch(apiUrl).then(res => res.json()).then(data => {
+          let closest = null;
+          let minDiff = Infinity;
+
+          for (const item of data.list) {
+            const forecastDate = new Date(item.dt * 1000);
+            const diff = Math.abs(eventDate - forecastDate);
+            if (diff < minDiff) {
+              minDiff = diff;
+              closest = item;
+            }
+          }
+
+          if (closest) {
+            const temp = Math.round(closest.main.temp);
+            const wind = Math.round(closest.wind.speed * 3.6); // m/s → km/h
+            const gust = Math.round((closest.wind.gust || closest.wind.speed) * 3.6);
+            const dir = degToCardinal(closest.wind.deg);
+            const condition = closest.weather[0].description;
+            const iconCode = closest.weather[0].icon;
+            const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+
+            const decision = analyzeRideCondition(temp, wind, gust, condition);
+
+            document.getElementById('weather-temp').textContent = temp;
+            document.getElementById('weather-wind').textContent = `${wind} km/h ${dir} (rafales ${gust} km/h)`;
+            document.getElementById('weather-condition').textContent = condition;
+            document.getElementById('weather-icon').src = iconUrl;
+            document.getElementById('weather-decision').textContent = decision.message;
+            document.getElementById('weather-decision').style.color = decision.color;
+          }
+        });
       });
-    });
 
-  function degToCardinal(deg) {
-    const dirs = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
-    return dirs[Math.round(deg / 45) % 8];
-  }
+    function degToCardinal(deg) {
+      const dirs = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
+      return dirs[Math.round(deg / 45) % 8];
+    }
 
-  function analyzeRideCondition(temp, wind, gust, condition) {
-    let note = 0;
+    function analyzeRideCondition(temp, wind, gust, condition) {
+      let note = 0;
 
-    if (temp >= 10 && temp <= 28) note += 2;
-    if (wind <= 20) note += 2;
-    if (gust <= 30) note += 1;
-    if (!condition.includes("pluie") && !condition.includes("orage")) note += 2;
+      if (temp >= 10 && temp <= 28) note += 2;
+      if (wind <= 20) note += 2;
+      if (gust <= 30) note += 1;
+      if (!condition.includes("pluie") && !condition.includes("orage")) note += 2;
 
-    if (note >= 6) return { message: "Favorable ✅", color: "green" };
-    if (note >= 4) return { message: "Acceptable ⚠️", color: "orange" };
-    return { message: "Déconseillé ❌", color: "red" };
-  }
-</script>
+      if (note >= 6) return { message: "Favorable ✅", color: "green" };
+      if (note >= 4) return { message: "Acceptable ⚠️", color: "orange" };
+      return { message: "Déconseillé ❌", color: "red" };
+    }
+  </script>
+
+</body>
 </html>
