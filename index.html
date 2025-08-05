@@ -142,7 +142,121 @@
       margin: 1rem 0;
     }
 
-    @media (max-width: 480px) {
+    .alert-section {
+      margin: 1rem 0;
+      padding: 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+
+    .alert-danger {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      color: #dc2626;
+      border-left: 4px solid #ef4444;
+    }
+
+    .alert-warning {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      color: #d97706;
+      border-left: 4px solid #f59e0b;
+    }
+
+    .alert-info {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #2563eb;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .comfort-index {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+
+    .comfort-item {
+      text-align: center;
+      padding: 0.75rem;
+      background: rgba(255,255,255,0.6);
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .comfort-score {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+
+    .precipitation-timeline {
+      background: rgba(255,255,255,0.6);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .precipitation-timeline h4 {
+      margin: 0 0 1rem 0;
+      color: var(--primary-color);
+      text-align: center;
+    }
+
+    .precip-bars {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .precip-bar {
+      text-align: center;
+      font-size: 0.8rem;
+    }
+
+    .precip-visual {
+      height: 40px;
+      background: linear-gradient(to top, #3b82f6, #60a5fa);
+      border-radius: 4px 4px 0 0;
+      margin-bottom: 0.25rem;
+      position: relative;
+    }
+
+    .wind-analysis {
+      background: rgba(255,255,255,0.6);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .wind-direction-indicator {
+      font-size: 2rem;
+      margin: 0.5rem 0;
+    }
+
+    .evolution-section {
+      background: rgba(255,255,255,0.6);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .evolution-timeline {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .evolution-point {
+      text-align: center;
+      padding: 0.5rem;
+      background: rgba(255,255,255,0.8);
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+        @media (max-width: 480px) {
       .event-card {
         padding: 1rem;
       }
@@ -154,6 +268,18 @@
       .weather-icon {
         height: 50px;
         width: 50px;
+      }
+
+      .comfort-index {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .evolution-timeline {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .precip-bars {
+        grid-template-columns: repeat(3, 1fr);
       }
     }
   </style>
@@ -214,6 +340,16 @@
         
         <div id="weather-decision">Analyse...</div>
         
+        <div id="alerts-section"></div>
+        
+        <div id="comfort-index" class="comfort-index"></div>
+        
+        <div id="precipitation-timeline" class="precipitation-timeline"></div>
+        
+        <div id="wind-analysis" class="wind-analysis"></div>
+        
+        <div id="evolution-section" class="evolution-section"></div>
+        
         <div class="chart-container">
           <canvas id="tempChart"></canvas>
         </div>
@@ -236,7 +372,9 @@
       cityCoords: { lat: 48.8383, lon: 2.7908 },
       calendarUrl: 'https://ddefin.github.io/calendrier-cyclo/calendrier.ics',
       weatherApiUrl: 'https://api.openweathermap.org/data/2.5/forecast',
-      iconBaseUrl: 'https://openweathermap.org/img/wn/'
+      iconBaseUrl: 'https://openweathermap.org/img/wn/',
+      // Direction générale du parcours Garmin (en degrés, 0 = Nord)
+      courseDirection: 45 // NE - à ajuster selon votre parcours principal
     };
 
     // Classe principale pour gérer l'application météo
@@ -257,6 +395,11 @@
           this.displayEventInfo(nextEvent);
           const weatherData = await this.getWeatherData();
           this.displayWeatherInfo(nextEvent.date, weatherData);
+          this.displayAlerts(nextEvent.date, weatherData);
+          this.displayComfortIndex(nextEvent.date, weatherData);
+          this.displayPrecipitationTimeline(nextEvent.date, weatherData);
+          this.displayWindAnalysis(nextEvent.date, weatherData);
+          this.displayEvolutionConditions(nextEvent.date, weatherData);
           this.createChart(weatherData);
           
           document.getElementById('loading').style.display = 'none';
@@ -320,6 +463,327 @@
           hour: '2-digit',
           minute: '2-digit'
         });
+      }
+
+      displayAlerts(eventDate, weatherData) {
+        const alerts = [];
+        const eventForecast = this.findClosestForecast(eventDate, weatherData.list);
+        const surroundingForecasts = this.getSurroundingForecasts(eventDate, weatherData.list, 4);
+
+        // Alerte dégradation des conditions
+        if (surroundingForecasts.length >= 3) {
+          const tempTrend = this.analyzeTrend(surroundingForecasts.map(f => f.main.temp));
+          const windTrend = this.analyzeTrend(surroundingForecasts.map(f => f.wind.speed * 3.6));
+          
+          if (tempTrend.decreasing && tempTrend.change > 5) {
+            alerts.push({
+              type: 'warning',
+              message: `⚠️ Température en baisse de ${Math.round(tempTrend.change)}°C pendant l'événement`
+            });
+          }
+          
+          if (windTrend.increasing && windTrend.change > 10) {
+            alerts.push({
+              type: 'warning',
+              message: `💨 Vent en augmentation (+${Math.round(windTrend.change)} km/h)`
+            });
+          }
+        }
+
+        // Alerte précipitations
+        if (eventForecast && eventForecast.weather[0].main === 'Rain') {
+          const rainIntensity = eventForecast.rain?.['3h'] || 0;
+          if (rainIntensity > 2) {
+            alerts.push({
+              type: 'danger',
+              message: `🌧️ Pluie forte prévue (${rainIntensity.toFixed(1)}mm/3h)`
+            });
+          } else {
+            alerts.push({
+              type: 'warning',
+              message: `🌦️ Pluie prévue pendant l'événement`
+            });
+          }
+        }
+
+        // Alerte vent fort
+        if (eventForecast) {
+          const windSpeed = eventForecast.wind.speed * 3.6;
+          const gustSpeed = (eventForecast.wind.gust || eventForecast.wind.speed) * 3.6;
+          
+          if (windSpeed > 40) {
+            alerts.push({
+              type: 'danger',
+              message: `🌪️ Vent très fort: ${Math.round(windSpeed)} km/h`
+            });
+          } else if (gustSpeed > 50) {
+            alerts.push({
+              type: 'warning',
+              message: `💨 Rafales importantes: jusqu'à ${Math.round(gustSpeed)} km/h`
+            });
+          }
+        }
+
+        // Alerte température extrême
+        if (eventForecast) {
+          const temp = eventForecast.main.temp;
+          if (temp < 0) {
+            alerts.push({
+              type: 'danger',
+              message: `🧊 Risque de verglas: ${Math.round(temp)}°C`
+            });
+          } else if (temp > 35) {
+            alerts.push({
+              type: 'danger',
+              message: `🔥 Chaleur excessive: ${Math.round(temp)}°C - Risque de déshydratation`
+            });
+          }
+        }
+
+        this.renderAlerts(alerts);
+      }
+
+      renderAlerts(alerts) {
+        const container = document.getElementById('alerts-section');
+        if (alerts.length === 0) {
+          container.innerHTML = '<div class="alert-section alert-info">✅ Aucune alerte météo pour cet événement</div>';
+          return;
+        }
+
+        container.innerHTML = alerts.map(alert => 
+          `<div class="alert-section alert-${alert.type}">${alert.message}</div>`
+        ).join('');
+      }
+
+      displayComfortIndex(eventDate, weatherData) {
+        const forecast = this.findClosestForecast(eventDate, weatherData.list);
+        if (!forecast) return;
+
+        const temp = forecast.main.temp;
+        const humidity = forecast.main.humidity;
+        const windSpeed = forecast.wind.speed * 3.6;
+        const condition = forecast.weather[0].main;
+
+        // Calcul indice de confort cycliste (0-10)
+        let comfort = 5; // Base neutre
+
+        // Confort température
+        if (temp >= 15 && temp <= 22) comfort += 2;
+        else if (temp >= 10 && temp <= 28) comfort += 1;
+        else if (temp < 5 || temp > 32) comfort -= 2;
+        else comfort -= 1;
+
+        // Confort vent (vent léger = meilleur)
+        if (windSpeed <= 10) comfort += 1.5;
+        else if (windSpeed <= 20) comfort += 0.5;
+        else if (windSpeed > 35) comfort -= 2;
+        else comfort -= 1;
+
+        // Confort humidité
+        if (humidity <= 60) comfort += 0.5;
+        else if (humidity >= 85) comfort -= 1;
+
+        // Confort conditions
+        if (['Clear', 'Clouds'].includes(condition)) comfort += 1;
+        else if (condition === 'Rain') comfort -= 2;
+        else if (['Thunderstorm', 'Snow'].includes(condition)) comfort -= 3;
+
+        comfort = Math.max(0, Math.min(10, comfort));
+
+        const comfortData = [
+          { label: 'Confort Global', value: comfort.toFixed(1), color: this.getComfortColor(comfort) },
+          { label: 'Température', value: `${Math.round(temp)}°C`, color: this.getTempColor(temp) },
+          { label: 'Vent', value: `${Math.round(windSpeed)} km/h`, color: this.getWindColor(windSpeed) },
+          { label: 'Humidité', value: `${humidity}%`, color: this.getHumidityColor(humidity) }
+        ];
+
+        document.getElementById('comfort-index').innerHTML = comfortData.map(item => 
+          `<div class="comfort-item">
+            <div class="comfort-score" style="color: ${item.color}">${item.value}</div>
+            <div>${item.label}</div>
+          </div>`
+        ).join('');
+      }
+
+      displayPrecipitationTimeline(eventDate, weatherData) {
+        const eventTime = eventDate.getTime();
+        const relevantForecasts = weatherData.list.filter(item => {
+          const forecastTime = item.dt * 1000;
+          return Math.abs(forecastTime - eventTime) <= 6 * 60 * 60 * 1000; // 6h avant/après
+        }).slice(0, 6);
+
+        const precipData = relevantForecasts.map(item => {
+          const date = new Date(item.dt * 1000);
+          const precip = (item.rain?.['3h'] || 0) + (item.snow?.['3h'] || 0);
+          const probability = item.pop * 100; // Probability of precipitation
+          
+          return {
+            time: date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+            precip: precip,
+            probability: Math.round(probability),
+            isEventTime: Math.abs(date.getTime() - eventTime) < 90 * 60 * 1000 // 1h30 de marge
+          };
+        });
+
+        const maxPrecip = Math.max(...precipData.map(d => d.precip), 1);
+
+        document.getElementById('precipitation-timeline').innerHTML = `
+          <h4>☔ Probabilité de précipitations</h4>
+          <div class="precip-bars">
+            ${precipData.map(data => `
+              <div class="precip-bar ${data.isEventTime ? 'event-time' : ''}">
+                <div class="precip-visual" style="height: ${(data.probability / 100) * 40}px; background: ${data.isEventTime ? 'linear-gradient(to top, #ef4444, #f87171)' : 'linear-gradient(to top, #3b82f6, #60a5fa)'}">
+                </div>
+                <div>${data.time}</div>
+                <div><strong>${data.probability}%</strong></div>
+              </div>
+            `).join('')}
+          </div>
+          <div style="text-align: center; font-size: 0.8rem; color: #666;">
+            Rouge = Heure de l'événement
+          </div>
+        `;
+      }
+
+      displayWindAnalysis(eventDate, weatherData) {
+        const forecast = this.findClosestForecast(eventDate, weatherData.list);
+        if (!forecast) return;
+
+        const windDirection = forecast.wind.deg;
+        const windSpeed = Math.round(forecast.wind.speed * 3.6);
+        const courseDirection = CONFIG.courseDirection;
+        
+        const windRelativeToCourse = this.analyzeWindDirection(windDirection, courseDirection);
+        
+        document.getElementById('wind-analysis').innerHTML = `
+          <h4>🧭 Analyse du vent sur le parcours</h4>
+          <div class="wind-direction-indicator">${windRelativeToCourse.icon}</div>
+          <div><strong>${windSpeed} km/h ${this.degToCardinal(windDirection)}</strong></div>
+          <div style="margin-top: 0.5rem; font-size: 0.9rem;">
+            ${windRelativeToCourse.description}
+          </div>
+          <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(255,255,255,0.8); border-radius: 4px; font-size: 0.85rem;">
+            <strong>Impact:</strong> ${windRelativeToCourse.impact}
+          </div>
+        `;
+      }
+
+      displayEvolutionConditions(eventDate, weatherData) {
+        const eventTime = eventDate.getTime();
+        const timePoints = [
+          { offset: -2, label: '-2h' },
+          { offset: -1, label: '-1h' },
+          { offset: 0, label: 'Événement' },
+          { offset: 1, label: '+1h' },
+          { offset: 2, label: '+2h' }
+        ];
+
+        const evolutionData = timePoints.map(point => {
+          const targetTime = new Date(eventTime + point.offset * 60 * 60 * 1000);
+          const forecast = this.findClosestForecast(targetTime, weatherData.list);
+          
+          if (!forecast) return null;
+          
+          return {
+            label: point.label,
+            temp: Math.round(forecast.main.temp),
+            wind: Math.round(forecast.wind.speed * 3.6),
+            condition: forecast.weather[0].icon,
+            precipitation: Math.round((forecast.pop || 0) * 100),
+            isEvent: point.offset === 0
+          };
+        }).filter(Boolean);
+
+        document.getElementById('evolution-section').innerHTML = `
+          <h4>⏰ Évolution des conditions (2h avant/après)</h4>
+          <div class="evolution-timeline">
+            ${evolutionData.map(data => `
+              <div class="evolution-point ${data.isEvent ? 'event-time' : ''}" style="${data.isEvent ? 'background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444;' : ''}">
+                <div class="evolution-time">${data.label}</div>
+                <img src="${CONFIG.iconBaseUrl}${data.condition}.png" style="height: 30px; width: 30px;">
+                <div>${data.temp}°C</div>
+                <div>${data.wind} km/h</div>
+                <div>${data.precipitation}% ☔</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      getSurroundingForecasts(targetDate, forecasts, count) {
+        const targetTime = targetDate.getTime();
+        return forecasts
+          .map(f => ({ ...f, timeDiff: Math.abs(f.dt * 1000 - targetTime) }))
+          .sort((a, b) => a.timeDiff - b.timeDiff)
+          .slice(0, count);
+      }
+
+      analyzeTrend(values) {
+        if (values.length < 2) return { increasing: false, decreasing: false, change: 0 };
+        
+        const first = values[0];
+        const last = values[values.length - 1];
+        const change = Math.abs(last - first);
+        
+        return {
+          increasing: last > first,
+          decreasing: last < first,
+          change: change
+        };
+      }
+
+      analyzeWindDirection(windDeg, courseDeg) {
+        const diff = Math.abs(windDeg - courseDeg);
+        const normalizedDiff = Math.min(diff, 360 - diff);
+        
+        if (normalizedDiff <= 45) {
+          return {
+            icon: '⬆️',
+            description: 'Vent de face - Résistance importante',
+            impact: 'Effort supplémentaire requis, vitesse réduite'
+          };
+        } else if (normalizedDiff >= 135) {
+          return {
+            icon: '⬇️', 
+            description: 'Vent de dos - Assistance favorable',
+            impact: 'Poussée du vent, vitesse facilitée'
+          };
+        } else {
+          const side = ((windDeg - courseDeg + 360) % 360) < 180 ? 'droit' : 'gauche';
+          return {
+            icon: normalizedDiff < 90 ? '↗️' : '➡️',
+            description: `Vent de côté ${side}`,
+            impact: 'Attention à la stabilité, possibles rafales latérales'
+          };
+        }
+      }
+
+      getComfortColor(comfort) {
+        if (comfort >= 8) return '#22c55e';
+        if (comfort >= 6) return '#84cc16';
+        if (comfort >= 4) return '#f59e0b';
+        return '#ef4444';
+      }
+
+      getTempColor(temp) {
+        if (temp >= 15 && temp <= 25) return '#22c55e';
+        if (temp >= 10 && temp <= 30) return '#84cc16';
+        if (temp >= 5 && temp <= 35) return '#f59e0b';
+        return '#ef4444';
+      }
+
+      getWindColor(wind) {
+        if (wind <= 15) return '#22c55e';
+        if (wind <= 25) return '#84cc16';
+        if (wind <= 35) return '#f59e0b';
+        return '#ef4444';
+      }
+
+      getHumidityColor(humidity) {
+        if (humidity <= 60) return '#22c55e';
+        if (humidity <= 75) return '#84cc16';
+        if (humidity <= 85) return '#f59e0b';
+        return '#ef4444';
         document.getElementById('weather-event-location').textContent = event.location;
       }
 
