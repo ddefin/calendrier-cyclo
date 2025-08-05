@@ -51,6 +51,11 @@
       50% { opacity: 0.6; }
       100% { opacity: 1; }
     }
+    #velo-weather p {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+}
+
   </style>
 </head>
 <body>
@@ -116,4 +121,64 @@
   </script>
 
 </body>
+  <section class="event-card">
+  <h2>🌤 Météo pour la sortie vélo</h2>
+  <div id="velo-weather">
+    <p><strong>📍 Ville :</strong> <span id="city">Serris</span></p>
+    <p><strong>🌡 Température :</strong> <span id="temp">–</span>°C</p>
+    <p><strong>🌬 Vent :</strong> <span id="wind">–</span></p>
+    <p><strong>☁️ Ciel :</strong> <span id="condition">–</span></p>
+    <p><strong>🚴 Sortie :</strong> <span id="velo-ok">Analyse...</span></p>
+  </div>
+</section>
+
+<script>
+  const apiKey = '0f9f95c50d2d777d38a9314a4ffadc93'; // remplace avec ta clé OpenWeather
+  const city = 'Serris,FR';
+
+  fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=fr`)
+    .then(res => res.json())
+    .then(data => {
+      const temp = data.main.temp;
+      const windSpeed = data.wind.speed * 3.6; // m/s → km/h
+      const gust = data.wind.gust ? data.wind.gust * 3.6 : windSpeed;
+      const windDeg = data.wind.deg;
+      const condition = data.weather[0].description;
+
+      // Convertir direction vent en texte
+      const windDir = degToCardinal(windDeg);
+
+      // Analyse de sortie "favorable"
+      const sortieOk = analyzeRideCondition(temp, windSpeed, gust, condition);
+
+      document.getElementById('temp').textContent = Math.round(temp);
+      document.getElementById('wind').textContent = `${Math.round(windSpeed)} km/h ${windDir} (rafales ${Math.round(gust)} km/h)`;
+      document.getElementById('condition').textContent = condition;
+      document.getElementById('velo-ok').textContent = sortieOk.message;
+      document.getElementById('velo-ok').style.color = sortieOk.color;
+    })
+    .catch(err => {
+      console.error("Erreur météo :", err);
+      document.getElementById('velo-ok').textContent = "Erreur météo";
+    });
+
+  function degToCardinal(deg) {
+    const dirs = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
+    return dirs[Math.round(deg / 45) % 8];
+  }
+
+  function analyzeRideCondition(temp, wind, gust, condition) {
+    let note = 0;
+
+    if (temp >= 10 && temp <= 28) note += 2;
+    if (wind <= 20) note += 2;
+    if (gust <= 30) note += 1;
+    if (!condition.includes("pluie") && !condition.includes("orage")) note += 2;
+
+    if (note >= 6) return { message: "Favorable ✅", color: "green" };
+    if (note >= 4) return { message: "Acceptable ⚠️", color: "orange" };
+    return { message: "Déconseillé ❌", color: "red" };
+  }
+</script>
+
 </html>
