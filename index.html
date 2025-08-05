@@ -6,184 +6,524 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    :root {
+      --primary-color: #2a4d9b;
+      --background-gradient: linear-gradient(135deg, #f0f4ff, #e0eaff);
+      --text-color: #333;
+      --success-color: #22c55e;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+      --border-radius: 12px;
+      --shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background-color: #f9fbff;
-      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f9fbff, #e8f2ff);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 1rem;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
     }
 
     .event-card {
       width: 100%;
-      max-width: 480px;
-      margin: 1rem auto;
-      padding: 1rem;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #f0f4ff, #e0eaff);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      color: #333;
+      margin: 1rem 0;
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      background: var(--background-gradient);
+      box-shadow: var(--shadow);
+      color: var(--text-color);
+      transition: transform 0.2s ease;
+    }
+
+    .event-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
     }
 
     .event-card h2 {
       text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.4rem;
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .info-grid {
+      display: grid;
+      gap: 0.8rem;
       margin-bottom: 1rem;
-      font-size: 1.3rem;
-      color: #2a4d9b;
     }
 
-    .event-card p {
-      margin: 0.5rem 0;
-      font-size: 1rem;
+    .info-item {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem;
+      background: rgba(255,255,255,0.4);
+      border-radius: 8px;
+      font-size: 0.95rem;
     }
 
-    #weather-decision {
-      font-weight: bold;
+    .info-item strong {
+      min-width: 80px;
+      color: var(--primary-color);
+    }
+
+    .info-item .emoji {
+      margin-right: 0.5rem;
       font-size: 1.1rem;
     }
 
-    canvas {
-      width: 100% !important;
-      max-width: 100%;
+    #weather-decision {
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.6);
+      margin: 1rem 0;
+    }
+
+    .weather-icon {
+      height: 60px;
+      width: 60px;
+      object-fit: contain;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 250px;
+      margin: 1.5rem 0;
+      background: rgba(255,255,255,0.5);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .cta-button {
+      display: inline-block;
+      background: var(--primary-color);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(42, 77, 155, 0.3);
+    }
+
+    .cta-button:hover {
+      background: #1e3a7a;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(42, 77, 155, 0.4);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      font-style: italic;
+      color: #666;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+
+    @media (max-width: 480px) {
+      .event-card {
+        padding: 1rem;
+      }
+      
+      .info-item {
+        font-size: 0.9rem;
+      }
+      
+      .weather-icon {
+        height: 50px;
+        width: 50px;
+      }
     }
   </style>
 </head>
 <body>
-  
-  <section class="event-card">
-    <h2>🌦 Météo pour le prochain événement</h2>
-    <div id="event-weather">
-      <p><strong>📅 Événement :</strong> <a href="https://connect.garmin.com/modern/course/387468682" target="_blank"><span id="weather-event-title">Chargement...</span></a></p>
-      <p><strong>🕒 Date :</strong> <span id="weather-event-date">–</span></p>
-      <p><strong>📍 Lieu :</strong> <span id="weather-event-location">–</span></p>
-      <p><strong>🌡 Température :</strong> <span id="weather-temp">–</span>°C</p>
-      <p><strong>🌬 Vent :</strong> <span id="weather-wind">–</span></p>
-      <p><strong>☁️ Ciel :</strong> <span id="weather-condition">–</span></p>
-      <p><strong>🌤 Icône :</strong> <img id="weather-icon" src="" alt="Icône météo" style="height: 50px;"></p>
-      <p><strong>🚴 Sortie :</strong> <span id="weather-decision">Analyse...</span></p>
-    </div>
-</section>
-  
-      <div style="text-align:center; margin-top:1rem;">
-  <a href="https://connect.garmin.com/modern/course/387468682" target="_blank" style="display:inline-block; background:#2a4d9b; color:#fff; padding:0.5rem 1rem; border-radius:8px; text-decoration:none; font-weight:bold;">🔗 Voir le parcours sur Garmin</a>
-</div>
-  
-  </section>
-  
+  <div class="container">
+    <section class="event-card">
+      <h2>🌦 Météo pour le prochain événement</h2>
+      
+      <div id="loading" class="loading">
+        Chargement des données météo...
+      </div>
+      
+      <div id="event-weather" style="display: none;">
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="emoji">📅</span>
+            <strong>Événement :</strong>
+            <a href="https://connect.garmin.com/modern/course/387468682" target="_blank" id="weather-event-title">–</a>
+          </div>
+          
+          <div class="info-item">
+            <span class="emoji">🕒</span>
+            <strong>Date :</strong>
+            <span id="weather-event-date">–</span>
+          </div>
+          
+          <div class="info-item">
+            <span class="emoji">📍</span>
+            <strong>Lieu :</strong>
+            <span id="weather-event-location">–</span>
+          </div>
+          
+          <div class="info-item">
+            <span class="emoji">🌡</span>
+            <strong>Température :</strong>
+            <span id="weather-temp">–</span>°C
+          </div>
+          
+          <div class="info-item">
+            <span class="emoji">🌬</span>
+            <strong>Vent :</strong>
+            <span id="weather-wind">–</span>
+          </div>
+          
+          <div class="info-item">
+            <span class="emoji">☁️</span>
+            <strong>Ciel :</strong>
+            <span id="weather-condition">–</span>
+          </div>
+          
+          <div class="info-item">
+            <span class="emoji">🌤</span>
+            <strong>Icône :</strong>
+            <img id="weather-icon" class="weather-icon" src="" alt="Icône météo">
+          </div>
+        </div>
+        
+        <div id="weather-decision">Analyse...</div>
+        
+        <div class="chart-container">
+          <canvas id="tempChart"></canvas>
+        </div>
+        
+        <div style="text-align: center; margin-top: 1.5rem;">
+          <a href="https://connect.garmin.com/modern/course/387468682" target="_blank" class="cta-button">
+            🔗 Voir le parcours sur Garmin
+          </a>
+        </div>
+      </div>
+      
+      <div id="error-message" class="error" style="display: none;"></div>
+    </section>
+  </div>
+
   <script>
-    const apiKey = '0f9f95c50d2d777d38a9314a4ffadc93';
-    const cityCoords = { lat: 48.8383, lon: 2.7908 };
+    // Configuration centralisée
+    const CONFIG = {
+      apiKey: '0f9f95c50d2d777d38a9314a4ffadc93',
+      cityCoords: { lat: 48.8383, lon: 2.7908 },
+      calendarUrl: 'https://ddefin.github.io/calendrier-cyclo/calendrier.ics',
+      weatherApiUrl: 'https://api.openweathermap.org/data/2.5/forecast',
+      iconBaseUrl: 'https://openweathermap.org/img/wn/'
+    };
 
-    fetch('https://ddefin.github.io/calendrier-cyclo/calendrier.ics')
-      .then(res => res.text())
-      .then(text => {
+    // Classe principale pour gérer l'application météo
+    class WeatherApp {
+      constructor() {
+        this.chart = null;
+        this.init();
+      }
+
+      async init() {
+        try {
+          const nextEvent = await this.getNextEvent();
+          if (!nextEvent) {
+            this.showError('Aucun événement trouvé dans le calendrier');
+            return;
+          }
+
+          this.displayEventInfo(nextEvent);
+          const weatherData = await this.getWeatherData();
+          this.displayWeatherInfo(nextEvent.date, weatherData);
+          this.createChart(weatherData);
+          
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('event-weather').style.display = 'block';
+        } catch (error) {
+          this.showError(`Erreur lors du chargement: ${error.message}`);
+        }
+      }
+
+      async getNextEvent() {
+        const response = await fetch(CONFIG.calendarUrl);
+        if (!response.ok) throw new Error('Impossible de charger le calendrier');
+        
+        const text = await response.text();
         const events = text.split('BEGIN:VEVENT');
-        let nextEvent = null;
+        const now = new Date();
 
-        for (const evt of events) {
-          const dtMatch = evt.match(/DTSTART(?:;TZID=Europe\/Paris)?:([0-9T]+)/);
-          if (dtMatch) {
-            const dt = dtMatch[1];
-            const date = new Date(
-              dt.slice(0, 4),
-              dt.slice(4, 6) - 1,
-              dt.slice(6, 8),
-              dt.includes('T') ? dt.slice(9, 11) : 0,
-              dt.includes('T') ? dt.slice(11, 13) : 0
-            );
-            if (date > new Date()) {
-              nextEvent = { raw: evt, date };
-              break;
-            }
+        for (const evt of events.slice(1)) { // Skip first empty element
+          const event = this.parseEvent(evt);
+          if (event && event.date > now) {
+            return event;
           }
         }
+        return null;
+      }
 
-        if (!nextEvent) {
-          document.getElementById('weather-event-title').textContent = "Aucun événement trouvé";
+      parseEvent(eventText) {
+        const dtMatch = eventText.match(/DTSTART(?:;TZID=Europe\/Paris)?:([0-9T]+)/);
+        if (!dtMatch) return null;
+
+        const dt = dtMatch[1];
+        const date = new Date(
+          parseInt(dt.slice(0, 4)),
+          parseInt(dt.slice(4, 6)) - 1,
+          parseInt(dt.slice(6, 8)),
+          dt.includes('T') ? parseInt(dt.slice(9, 11)) : 9, // Default to 9h if no time
+          dt.includes('T') ? parseInt(dt.slice(11, 13)) : 0
+        );
+
+        return {
+          date,
+          title: eventText.match(/SUMMARY:(.+)/)?.[1]?.trim() || "Événement cycliste",
+          location: eventText.match(/LOCATION:(.+)/)?.[1]?.trim() || "Lieu non précisé"
+        };
+      }
+
+      async getWeatherData() {
+        const url = `${CONFIG.weatherApiUrl}?lat=${CONFIG.cityCoords.lat}&lon=${CONFIG.cityCoords.lon}&units=metric&lang=fr&appid=${CONFIG.apiKey}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Impossible de charger les données météo');
+        return response.json();
+      }
+
+      displayEventInfo(event) {
+        document.getElementById('weather-event-title').textContent = event.title;
+        document.getElementById('weather-event-date').textContent = event.date.toLocaleString('fr-FR', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        document.getElementById('weather-event-location').textContent = event.location;
+      }
+
+      displayWeatherInfo(eventDate, weatherData) {
+        const forecast = this.findClosestForecast(eventDate, weatherData.list);
+        if (!forecast) {
+          this.showError('Prévisions météo non disponibles pour cette date');
           return;
         }
 
-        const title = nextEvent.raw.match(/SUMMARY:(.+)/)?.[1] || "Événement";
-        const location = nextEvent.raw.match(/LOCATION:(.+)/)?.[1] || "Lieu non précisé";
-        const eventDate = nextEvent.date;
+        const temp = Math.round(forecast.main.temp);
+        const wind = Math.round(forecast.wind.speed * 3.6);
+        const gust = Math.round((forecast.wind.gust || forecast.wind.speed) * 3.6);
+        const direction = this.degToCardinal(forecast.wind.deg);
+        const condition = forecast.weather[0].description;
+        const iconCode = forecast.weather[0].icon;
 
-        document.getElementById('weather-event-title').textContent = title;
-        document.getElementById('weather-event-date').textContent = eventDate.toLocaleString('fr-FR');
-        document.getElementById('weather-event-location').textContent = location;
+        document.getElementById('weather-temp').textContent = temp;
+        document.getElementById('weather-wind').textContent = `${wind} km/h ${direction} (rafales ${gust} km/h)`;
+        document.getElementById('weather-condition').textContent = condition;
+        document.getElementById('weather-icon').src = `${CONFIG.iconBaseUrl}${iconCode}@2x.png`;
 
-        const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${cityCoords.lat}&lon=${cityCoords.lon}&units=metric&lang=fr&appid=${apiKey}`;
+        const decision = this.analyzeRideCondition(temp, wind, gust, condition);
+        const decisionElement = document.getElementById('weather-decision');
+        decisionElement.textContent = decision.message;
+        decisionElement.style.color = decision.color;
+        decisionElement.style.background = decision.background;
+      }
 
-        return fetch(apiUrl).then(res => res.json()).then(data => {
-          let closest = null;
-          let minDiff = Infinity;
-          const labels = [], temps = [];
+      findClosestForecast(targetDate, forecasts) {
+        let closest = null;
+        let minDiff = Infinity;
 
-          for (const item of data.list) {
-            const forecastDate = new Date(item.dt * 1000);
-            const diff = Math.abs(eventDate - forecastDate);
-            if (diff < minDiff) {
-              minDiff = diff;
-              closest = item;
-            }
-            labels.push(forecastDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-            temps.push(item.main.temp);
+        for (const forecast of forecasts) {
+          const forecastDate = new Date(forecast.dt * 1000);
+          const diff = Math.abs(targetDate - forecastDate);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closest = forecast;
           }
+        }
+        return closest;
+      }
 
-          if (closest) {
-            const temp = Math.round(closest.main.temp);
-            const wind = Math.round(closest.wind.speed * 3.6);
-            const gust = Math.round((closest.wind.gust || closest.wind.speed) * 3.6);
-            const dir = degToCardinal(closest.wind.deg);
-            const condition = closest.weather[0].description;
-            const iconCode = closest.weather[0].icon;
-            const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+      createChart(weatherData) {
+        const ctx = document.getElementById('tempChart').getContext('2d');
+        
+        // Destroy existing chart if it exists
+        if (this.chart) {
+          this.chart.destroy();
+        }
 
-            const decision = analyzeRideCondition(temp, wind, gust, condition);
+        const labels = [];
+        const temps = [];
+        const winds = [];
 
-            document.getElementById('weather-temp').textContent = temp;
-            document.getElementById('weather-wind').textContent = `${wind} km/h ${dir} (rafales ${gust} km/h)`;
-            document.getElementById('weather-condition').textContent = condition;
-            document.getElementById('weather-icon').src = iconUrl;
-            document.getElementById('weather-decision').textContent = decision.message;
-            document.getElementById('weather-decision').style.color = decision.color;
-          }
-
-          new Chart(document.getElementById('tempChart'), {
-            type: 'line',
-            data: {
-              labels: labels.slice(0, 8),
-              datasets: [{
-                label: 'Température (°C)',
-                data: temps.slice(0, 8),
-                fill: false,
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false
-            }
-          });
+        weatherData.list.slice(0, 16).forEach(item => {
+          const date = new Date(item.dt * 1000);
+          labels.push(date.toLocaleDateString('fr-FR', { 
+            month: 'short', 
+            day: 'numeric', 
+            hour: '2-digit' 
+          }));
+          temps.push(Math.round(item.main.temp));
+          winds.push(Math.round(item.wind.speed * 3.6));
         });
-      });
 
-    function degToCardinal(deg) {
-      const dirs = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
-      return dirs[Math.round(deg / 45) % 8];
+        this.chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Température (°C)',
+                data: temps,
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                fill: true,
+                tension: 0.4,
+                yAxisID: 'y'
+              },
+              {
+                label: 'Vent (km/h)',
+                data: winds,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: false,
+                tension: 0.4,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false,
+            },
+            plugins: {
+              legend: {
+                position: 'top',
+              }
+            },
+            scales: {
+              x: {
+                display: true,
+                grid: {
+                  color: 'rgba(0,0,0,0.1)'
+                }
+              },
+              y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                  display: true,
+                  text: 'Température (°C)'
+                }
+              },
+              y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                  display: true,
+                  text: 'Vent (km/h)'
+                },
+                grid: {
+                  drawOnChartArea: false,
+                }
+              }
+            }
+          }
+        });
+      }
+
+      degToCardinal(deg) {
+        const directions = ["N", "NE", "E", "SE", "S", "SO", "O", "NO"];
+        return directions[Math.round(deg / 45) % 8];
+      }
+
+      analyzeRideCondition(temp, wind, gust, condition) {
+        let score = 0;
+        
+        // Évaluation température (optimal: 15-25°C)
+        if (temp >= 15 && temp <= 25) score += 3;
+        else if (temp >= 10 && temp <= 30) score += 2;
+        else if (temp >= 5 && temp <= 35) score += 1;
+
+        // Évaluation vent
+        if (wind <= 15) score += 3;
+        else if (wind <= 25) score += 2;
+        else if (wind <= 35) score += 1;
+
+        // Évaluation rafales
+        if (gust <= 25) score += 2;
+        else if (gust <= 40) score += 1;
+
+        // Évaluation conditions
+        const badWeather = ['pluie', 'orage', 'neige', 'grêle'];
+        if (!badWeather.some(weather => condition.toLowerCase().includes(weather))) {
+          score += 2;
+        }
+
+        // Retour de la décision
+        if (score >= 8) {
+          return { 
+            message: "Conditions idéales ! 🚴‍♂️✨", 
+            color: "white", 
+            background: "var(--success-color)" 
+          };
+        } else if (score >= 6) {
+          return { 
+            message: "Conditions favorables ✅", 
+            color: "white", 
+            background: "var(--success-color)" 
+          };
+        } else if (score >= 4) {
+          return { 
+            message: "Conditions acceptables ⚠️", 
+            color: "white", 
+            background: "var(--warning-color)" 
+          };
+        } else {
+          return { 
+            message: "Conditions difficiles ❌", 
+            color: "white", 
+            background: "var(--danger-color)" 
+          };
+        }
+      }
+
+      showError(message) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error-message').textContent = message;
+        document.getElementById('error-message').style.display = 'block';
+      }
     }
 
-    function analyzeRideCondition(temp, wind, gust, condition) {
-      let note = 0;
-      if (temp >= 10 && temp <= 28) note += 2;
-      if (wind <= 20) note += 2;
-      if (gust <= 30) note += 1;
-      if (!condition.includes("pluie") && !condition.includes("orage")) note += 2;
-
-      if (note >= 6) return { message: "Favorable ✅", color: "green" };
-      if (note >= 4) return { message: "Acceptable ⚠️", color: "orange" };
-      return { message: "Déconseillé ❌", color: "red" };
-    }
+    // Initialisation de l'application
+    document.addEventListener('DOMContentLoaded', () => {
+      new WeatherApp();
+    });
   </script>
-
 </body>
 </html>
