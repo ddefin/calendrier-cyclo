@@ -439,10 +439,22 @@
           dt.includes('T') ? parseInt(dt.slice(11, 13)) : 0
         );
 
+        // Parsing plus robuste du titre et du lieu
+        const titleMatch = eventText.match(/SUMMARY:(.+?)(?:\r?\n|\r)/);
+        const locationMatch = eventText.match(/LOCATION:(.+?)(?:\r?\n|\r)/);
+        
+        // Debug - affichons ce qu'on trouve
+        console.log('Event text preview:', eventText.substring(0, 500));
+        console.log('Title match:', titleMatch);
+        console.log('Location match:', locationMatch);
+
+        const title = titleMatch?.[1]?.trim() || "Événement cycliste";
+        const location = locationMatch?.[1]?.trim() || "1 rue des labours 77700 Magny le Hongre";
+
         return {
           date,
-          title: eventText.match(/SUMMARY:(.+)/)?.[1]?.trim() || "Événement cycliste",
-          location: eventText.match(/LOCATION:(.+)/)?.[1]?.trim() || "1 rue des labours 77700 Magny le Hongre"
+          title,
+          location
         };
       }
 
