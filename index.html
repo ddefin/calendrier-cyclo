@@ -56,6 +56,7 @@
   <section class="event-card">
   <h2>🌦 Météo pour le prochain événement</h2>
   <div id="event-weather">
+    <p><strong>🌤 Icône :</strong> <img id="weather-icon" src="" alt="Météo" style="vertical-align: middle; height: 60px;"></p>
     <p><strong>📅 Événement :</strong> <span id="weather-event-title">Chargement...</span></p>
     <p><strong>🕒 Date :</strong> <span id="weather-event-date">–</span></p>
     <p><strong>🌡 Température :</strong> <span id="weather-temp">–</span>°C</p>
@@ -127,6 +128,10 @@
           const gust = Math.round((closest.wind.gust || closest.wind.speed) * 3.6);
           const dir = degToCardinal(closest.wind.deg);
           const condition = closest.weather[0].description;
+          const iconCode = closest.weather[0].icon;
+const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+document.getElementById('weather-icon').src = iconUrl;
+
 
           const decision = analyzeRideCondition(temp, wind, gust, condition);
 
