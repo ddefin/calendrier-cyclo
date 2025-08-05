@@ -2,47 +2,48 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Prochain Événement Vélo + Météo</title>
+  <title>Météo Vélo - Mobile Friendly</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       background-color: #f9fbff;
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      padding: 2rem;
+      padding: 1rem;
     }
 
     .event-card {
-      max-width: 500px;
-      margin: 2rem auto;
-      padding: 1.5rem;
+      width: 100%;
+      max-width: 480px;
+      margin: 1rem auto;
+      padding: 1rem;
       border-radius: 12px;
       background: linear-gradient(135deg, #f0f4ff, #e0eaff);
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       color: #333;
-      animation: fadeIn 1s ease-in-out;
     }
 
     .event-card h2 {
       text-align: center;
       margin-bottom: 1rem;
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       color: #2a4d9b;
     }
 
     .event-card p {
       margin: 0.5rem 0;
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
 
     #weather-decision {
       font-weight: bold;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    canvas {
+      width: 100% !important;
+      max-width: 100%;
     }
   </style>
 </head>
@@ -57,16 +58,21 @@
       <p><strong>🌡 Température :</strong> <span id="weather-temp">–</span>°C</p>
       <p><strong>🌬 Vent :</strong> <span id="weather-wind">–</span></p>
       <p><strong>☁️ Ciel :</strong> <span id="weather-condition">–</span></p>
-      <p><strong>🌤 Icône :</strong> <img id="weather-icon" src="" alt="Icône météo" style="vertical-align: middle; height: 60px;"></p>
+      <p><strong>🌤 Icône :</strong> <img id="weather-icon" src="" alt="Icône météo" style="height: 50px;"></p>
       <p><strong>🚴 Sortie :</strong> <span id="weather-decision">Analyse...</span></p>
     </div>
   </section>
 
-  <script>
-    const apiKey = '0f9f95c50d2d777d38a9314a4ffadc93'; // 🔁 Remplace par ta clé OpenWeather
-    const cityCoords = { lat: 48.8383, lon: 2.7908 }; // Coordonnées de Serris
+  <section class="event-card">
+    <h2>📊 Température sur 24h</h2>
+    <canvas id="tempChart"></canvas>
+  </section>
 
-    fetch('https://github.com/ddefin/calendrier-cyclo/blob/main/calendrier.ics')
+  <script>
+    const apiKey = '0f9f95c50d2d777d38a9314a4ffadc93';
+    const cityCoords = { lat: 48.8383, lon: 2.7908 };
+
+    fetch('https://github.com/ddefin/calendrier-cyclo/edit/main/calendrier.ics')
       .then(res => res.text())
       .then(text => {
         const events = text.split('BEGIN:VEVENT');
@@ -95,7 +101,6 @@
           return;
         }
 
-        // Extraire les données
         const title = nextEvent.raw.match(/SUMMARY:(.+)/)?.[1] || "Événement";
         const location = nextEvent.raw.match(/LOCATION:(.+)/)?.[1] || "Lieu non précisé";
         const eventDate = nextEvent.date;
@@ -105,9 +110,11 @@
         document.getElementById('weather-event-location').textContent = location;
 
         const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${cityCoords.lat}&lon=${cityCoords.lon}&units=metric&lang=fr&appid=${apiKey}`;
+
         return fetch(apiUrl).then(res => res.json()).then(data => {
           let closest = null;
           let minDiff = Infinity;
+          const labels = [], temps = [];
 
           for (const item of data.list) {
             const forecastDate = new Date(item.dt * 1000);
@@ -116,11 +123,13 @@
               minDiff = diff;
               closest = item;
             }
+            labels.push(forecastDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+            temps.push(item.main.temp);
           }
 
           if (closest) {
             const temp = Math.round(closest.main.temp);
-            const wind = Math.round(closest.wind.speed * 3.6); // m/s → km/h
+            const wind = Math.round(closest.wind.speed * 3.6);
             const gust = Math.round((closest.wind.gust || closest.wind.speed) * 3.6);
             const dir = degToCardinal(closest.wind.deg);
             const condition = closest.weather[0].description;
@@ -136,6 +145,24 @@
             document.getElementById('weather-decision').textContent = decision.message;
             document.getElementById('weather-decision').style.color = decision.color;
           }
+
+          new Chart(document.getElementById('tempChart'), {
+            type: 'line',
+            data: {
+              labels: labels.slice(0, 8),
+              datasets: [{
+                label: 'Température (°C)',
+                data: temps.slice(0, 8),
+                fill: false,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false
+            }
+          });
         });
       });
 
@@ -146,7 +173,6 @@
 
     function analyzeRideCondition(temp, wind, gust, condition) {
       let note = 0;
-
       if (temp >= 10 && temp <= 28) note += 2;
       if (wind <= 20) note += 2;
       if (gust <= 30) note += 1;
