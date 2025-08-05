@@ -72,7 +72,7 @@
     const apiKey = '0f9f95c50d2d777d38a9314a4ffadc93';
     const cityCoords = { lat: 48.8383, lon: 2.7908 };
 
-    fetch('https://github.com/ddefin/calendrier-cyclo/edit/main/calendrier.ics')
+    fetch('https://github.com/ddefin/calendrier-cyclo/calendrier.ics')
       .then(res => res.text())
       .then(text => {
         const events = text.split('BEGIN:VEVENT');
