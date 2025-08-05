@@ -56,104 +56,91 @@
 <body>
 
   <section class="event-card">
-    <h2>📅 Prochain événement</h2>
-    <div id="event-details">
-      <p><strong>📝 Nom :</strong> <span id="event-title">Chargement...</span></p>
-      <p><strong>🕒 Date :</strong> <span id="event-date">–</span></p>
-      <p><strong>📍 Lieu :</strong> <span id="event-location">–</span></p>
-      <p><strong>⏳ Dans :</strong> <span id="event-countdown">–</span></p>
-    </div>
-  </section>
-
-  <script>
-    fetch('https://ddefin.github.io/calendrier-cyclo/calendrier.ics') // ou URL directe si le fichier est en ligne
-      .then(res => res.text())
-      .then(text => {
-        const events = text.split('BEGIN:VEVENT');
-        let nextEvent = null;
-
-        for (const evt of events) {
-          const dtMatch = evt.match(/DTSTART(?:;TZID=Europe\/Paris)?:([0-9T]+)/);
-          if (dtMatch) {
-            const dt = dtMatch[1];
-            const date = new Date(
-              dt.slice(0,4),
-              dt.slice(4,6)-1,
-              dt.slice(6,8),
-              dt.includes('T') ? dt.slice(9,11) : 0,
-              dt.includes('T') ? dt.slice(11,13) : 0
-            );
-            if (date > new Date()) {
-              nextEvent = { raw: evt, date };
-              break;
-            }
-          }
-        }
-
-        if (nextEvent) {
-          const titleMatch = nextEvent.raw.match(/SUMMARY:(.+)/);
-          const locationMatch = nextEvent.raw.match(/LOCATION:(.+)/);
-          const urlMatch = nextEvent.raw.match(/URL:(.+)/);
-
-          const title = titleMatch ? titleMatch[1].trim() : "Événement";
-          const location = locationMatch ? locationMatch[1].trim() : "Lieu non précisé";
-          const url = urlMatch ? urlMatch[1].trim() : "#";
-
-          document.getElementById('event-title').innerHTML = `<a href="${url}" target="_blank">${title}</a>`;
-          document.getElementById('event-date').textContent = nextEvent.date.toLocaleString('fr-FR');
-          document.getElementById('event-location').textContent = location;
-
-          const now = new Date();
-          const diff = nextEvent.date - now;
-          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-          const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-          const minutes = Math.floor((diff / (1000 * 60)) % 60);
-          document.getElementById('event-countdown').textContent = `${days} j, ${hours} h, ${minutes} min`;
-        } else {
-          document.getElementById('event-title').textContent = "Aucun événement à venir";
-        }
-      });
-  </script>
-</body>
-  <section class="event-card">
-  <h2>🌤 Météo pour la sortie vélo</h2>
-  <div id="velo-weather">
-    <p><strong>📍 Ville :</strong> <span id="city">Serris</span></p>
-    <p><strong>🌡 Température :</strong> <span id="temp">–</span>°C</p>
-    <p><strong>🌬 Vent :</strong> <span id="wind">–</span></p>
-    <p><strong>☁️ Ciel :</strong> <span id="condition">–</span></p>
-    <p><strong>🚴 Sortie :</strong> <span id="velo-ok">Analyse...</span></p>
+  <h2>🌦 Météo pour le prochain événement</h2>
+  <div id="event-weather">
+    <p><strong>📅 Événement :</strong> <span id="weather-event-title">Chargement...</span></p>
+    <p><strong>🕒 Date :</strong> <span id="weather-event-date">–</span></p>
+    <p><strong>📍 Lieu :</strong> <span id="weather-event-location">–</span></p>
+    <p><strong>🌡 Température :</strong> <span id="weather-temp">–</span>°C</p>
+    <p><strong>🌬 Vent :</strong> <span id="weather-wind">–</span></p>
+    <p><strong>☁️ Ciel :</strong> <span id="weather-condition">–</span></p>
+    <p><strong>🚴 Sortie :</strong> <span id="weather-decision">Analyse...</span></p>
   </div>
 </section>
 
 <script>
-  const apiKey = '0f9f95c50d2d777d38a9314a4ffadc93'; // remplace avec ta clé OpenWeather
-  const city = 'Serris,FR';
+  const apiKey = '0f9f95c50d2d777d38a9314a4ffadc93'; // 🔁 Remplace par ta clé OpenWeather
+  const cityCoords = { lat: 48.8383, lon: 2.7908 }; // Serris
 
-  fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric&lang=fr`)
-    .then(res => res.json())
-    .then(data => {
-      const temp = data.main.temp;
-      const windSpeed = data.wind.speed * 3.6; // m/s → km/h
-      const gust = data.wind.gust ? data.wind.gust * 3.6 : windSpeed;
-      const windDeg = data.wind.deg;
-      const condition = data.weather[0].description;
+  fetch('calendrier.ics')
+    .then(res => res.text())
+    .then(text => {
+      const events = text.split('BEGIN:VEVENT');
+      let nextEvent = null;
 
-      // Convertir direction vent en texte
-      const windDir = degToCardinal(windDeg);
+      for (const evt of events) {
+        const dtMatch = evt.match(/DTSTART(?:;TZID=Europe\/Paris)?:([0-9T]+)/);
+        if (dtMatch) {
+          const dt = dtMatch[1];
+          const date = new Date(
+            dt.slice(0, 4),
+            dt.slice(4, 6) - 1,
+            dt.slice(6, 8),
+            dt.includes('T') ? dt.slice(9, 11) : 0,
+            dt.includes('T') ? dt.slice(11, 13) : 0
+          );
+          if (date > new Date()) {
+            nextEvent = { raw: evt, date };
+            break;
+          }
+        }
+      }
 
-      // Analyse de sortie "favorable"
-      const sortieOk = analyzeRideCondition(temp, windSpeed, gust, condition);
+      if (!nextEvent) {
+        document.getElementById('weather-event-title').textContent = "Aucun événement trouvé";
+        return;
+      }
 
-      document.getElementById('temp').textContent = Math.round(temp);
-      document.getElementById('wind').textContent = `${Math.round(windSpeed)} km/h ${windDir} (rafales ${Math.round(gust)} km/h)`;
-      document.getElementById('condition').textContent = condition;
-      document.getElementById('velo-ok').textContent = sortieOk.message;
-      document.getElementById('velo-ok').style.color = sortieOk.color;
-    })
-    .catch(err => {
-      console.error("Erreur météo :", err);
-      document.getElementById('velo-ok').textContent = "Erreur météo";
+      // Extraire les données de l'événement
+      const title = nextEvent.raw.match(/SUMMARY:(.+)/)?.[1] || "Événement";
+      const location = nextEvent.raw.match(/LOCATION:(.+)/)?.[1] || "Lieu non précisé";
+      const eventDate = nextEvent.date;
+      document.getElementById('weather-event-title').textContent = title;
+      document.getElementById('weather-event-date').textContent = eventDate.toLocaleString('fr-FR');
+      document.getElementById('weather-event-location').textContent = location;
+
+      // Appeler OpenWeather forecast 5 jours / 3h
+      const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${cityCoords.lat}&lon=${cityCoords.lon}&units=metric&lang=fr&appid=${apiKey}`;
+      return fetch(apiUrl).then(res => res.json()).then(data => {
+        // Trouver la prévision la plus proche de l'heure de l'événement
+        let closest = null;
+        let minDiff = Infinity;
+
+        for (const item of data.list) {
+          const forecastDate = new Date(item.dt * 1000);
+          const diff = Math.abs(eventDate - forecastDate);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closest = item;
+          }
+        }
+
+        if (closest) {
+          const temp = Math.round(closest.main.temp);
+          const wind = Math.round(closest.wind.speed * 3.6); // m/s → km/h
+          const gust = Math.round((closest.wind.gust || closest.wind.speed) * 3.6);
+          const dir = degToCardinal(closest.wind.deg);
+          const condition = closest.weather[0].description;
+
+          const decision = analyzeRideCondition(temp, wind, gust, condition);
+
+          document.getElementById('weather-temp').textContent = temp;
+          document.getElementById('weather-wind').textContent = `${wind} km/h ${dir} (rafales ${gust} km/h)`;
+          document.getElementById('weather-condition').textContent = condition;
+          document.getElementById('weather-decision').textContent = decision.message;
+          document.getElementById('weather-decision').style.color = decision.color;
+        }
+      });
     });
 
   function degToCardinal(deg) {
@@ -174,5 +161,4 @@
     return { message: "Déconseillé ❌", color: "red" };
   }
 </script>
-
 </html>
